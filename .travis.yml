@@ -1,0 +1,22 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t erichodgins/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run erichodgins/react-test npm test -- --coverage
+
+after_success:
+    - docker build -t erichodgins/multi-client ./client
+    - docker build -t erichodgins/multi-nginx ./nginx
+    - docker build -t erichodgins/multi-server ./server
+    - docker build -t erichodgins/multi-worker ./worker
+    # Log in to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take images and push to docker hub
+    - docker push erichodgins/multi-client
+    - docker push erichodgins/multi-nginx
+    - docker push erichodgins/multi-server
+    - docker push erichodgins/multi-worker
